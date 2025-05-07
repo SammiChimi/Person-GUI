@@ -35,7 +35,7 @@ public class PersonGUI extends JFrame implements ActionListener {
     JMenu mnuFile, mnuHelp;
     JMenuItem mniNew, mniOpen, mniSave, mniSaveAs, mniExit, mniHowTo;
     JTextField txtFirstName, txtLastName, txtGovID, txtStudentID;
-    JButton btnEdit, btnDelete;
+    JButton btnAddNew, btnEdit, btnDelete;
     JLabel lblClassType;
     JComboBox<Person> cbxPeople;
 
@@ -60,32 +60,29 @@ public class PersonGUI extends JFrame implements ActionListener {
         mnuFile = new JMenu("File");
         mnuFile.setMnemonic(KeyEvent.VK_F);
 
-        mniNew = new JMenuItem("Add New...");
-        mniNew.addActionListener(this);
+        mniNew = new JMenuItem("New...");
         mniNew.setMnemonic(KeyEvent.VK_N);
 
         mniOpen = new JMenuItem("Open");
-        mniOpen.addActionListener(this);
         mniOpen.setMnemonic(KeyEvent.VK_O);
 
         mniSave = new JMenuItem("Save");
-        mniSave.addActionListener(this);
         mniSave.setMnemonic(KeyEvent.VK_S);
 
         mniSaveAs = new JMenuItem("Save as...");
-        mniSaveAs.addActionListener(this);
         mniSave.setMnemonic(KeyEvent.VK_A);
 
         mniExit = new JMenuItem("Exit");
-        mniExit.addActionListener(this);
         mniExit.setMnemonic(KeyEvent.VK_X);
 
-        mnuFile.add(mniNew);
-        mnuFile.add(mniOpen);
-        mnuFile.add(mniSave);
-        mnuFile.add(mniSaveAs);
-        mnuFile.addSeparator();
-        mnuFile.add(mniExit);
+        JMenuItem[] mniList = {mniNew, mniOpen, mniSave, mniSaveAs, mniExit};
+        for (JMenuItem mni : mniList) {
+            if (mni == mniExit) {
+                mnuFile.addSeparator();
+            }
+            mni.addActionListener(this);
+            mnuFile.add(mni);
+        }
 
         // Help menu
         mnuHelp = new JMenu("Help");
@@ -113,44 +110,35 @@ public class PersonGUI extends JFrame implements ActionListener {
         // Entry fields
         gbc.insets = new Insets(0,20,10,0);
         gbc.gridx = 0;
-        gbc.gridy = 0;
         gbc.weightx = .2;
+
         JLabel lblFirstName = new JLabel("First Name:");
-        pnlInfoGrid.add(lblFirstName, gbc);
-        gbc.gridy = 1;
         JLabel lblLastName = new JLabel("Last Name:");
-        pnlInfoGrid.add(lblLastName, gbc);
-        gbc.gridy = 2;
         JLabel lblGovID = new JLabel("Government ID:");
-        pnlInfoGrid.add(lblGovID, gbc);
-        gbc.gridy = 3;
         JLabel lblStudentID = new JLabel("StudentID:");
-        pnlInfoGrid.add(lblStudentID, gbc);
+
+        int y = 0;
+        JLabel[] lblList = {lblFirstName, lblLastName, lblGovID, lblStudentID};
+        for (JLabel lbl : lblList) {
+            gbc.gridy = y++;
+            pnlInfoGrid.add(lbl, gbc);
+        }
 
         gbc.insets = new Insets(0,0,10,20);
         gbc.gridx = 1;
-        gbc.gridy = 0;
         gbc.weightx = .3;
-        txtFirstName = new JTextField();
-        pnlInfoGrid.add(txtFirstName, gbc);
-        gbc.gridy = 1;
-        txtLastName = new JTextField();
-        pnlInfoGrid.add(txtLastName, gbc);
-        gbc.gridy = 2;
-        txtGovID = new JTextField();
-        pnlInfoGrid.add(txtGovID, gbc);
-        gbc.gridy = 3;
-        txtStudentID = new JTextField();
-        pnlInfoGrid.add(txtStudentID, gbc);
+
+        y = 0;
+        JTextField[] txtList = {txtFirstName, txtLastName, txtGovID, txtStudentID};
+        for (JTextField txt : txtList) {
+            gbc.gridy = y++;
+            txt = new JTextField();
+            pnlInfoGrid.add(txt, gbc);
+        }
 
         // ComboBox & type JLabel
         cbxPeople = new JComboBox<>();
-        cbxPeople.addItemListener(new ItemListener() {
-            @Override
-            public void itemStateChanged(ItemEvent e) {
-                displaySelection();
-            }
-        });
+        cbxPeople.addItemListener(_ -> displaySelection());
         gbc.gridx = 3;
         gbc.gridy = 1;
         gbc.weightx = .6;
@@ -163,13 +151,15 @@ public class PersonGUI extends JFrame implements ActionListener {
         // Buttons
         JPanel pnlButtons = new JPanel();
 
+        btnAddNew = new JButton("Add New");
         btnEdit = new JButton("Edit");
         btnDelete = new JButton("Delete");
 
-        btnEdit.addActionListener(this);
-        btnDelete.addActionListener(this);
-        pnlButtons.add(btnEdit);
-        pnlButtons.add(btnDelete);
+        JButton[] btnList = {btnAddNew, btnEdit, btnDelete};
+        for (JButton btn : btnList) {
+            btn.addActionListener(this);
+            pnlButtons.add(btn);
+        }
 
         gbc.gridx = 1;
         gbc.gridy = 4;
@@ -213,7 +203,7 @@ public class PersonGUI extends JFrame implements ActionListener {
                     "About PersonGUI", JOptionPane.PLAIN_MESSAGE);
         }
 
-        if (e.getSource() == mniNew) {
+        if (e.getSource() == btnAddNew) {
             msg = "Please enter person information to add a Person entry.";
             Person newPerson = makePerson();
 
