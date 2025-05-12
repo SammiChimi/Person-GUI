@@ -3,17 +3,25 @@
 // Advanced Java
 // OCCC Spring 2025
 
+import com.github.lgooddatepicker.components.CalendarPanel;
+import com.github.lgooddatepicker.optionalusertools.CalendarListener;
+import com.github.lgooddatepicker.zinternaltools.CalendarSelectionEvent;
+import com.github.lgooddatepicker.zinternaltools.YearMonthChangeEvent;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.GregorianCalendar;
 import javax.swing.filechooser.FileFilter;
 
 public class PersonGUI extends JFrame implements ActionListener {
 
-    private static final int WIDTH = 600;
-    private static final int HEIGHT = 600;
-    private File loadedFile;
+    private static final int WIDTH = 660;
+    private static final int HEIGHT = 500;
     private final FileFilter filter = new FileFilter() {
         @Override
         public boolean accept(File f) {
@@ -29,17 +37,18 @@ public class PersonGUI extends JFrame implements ActionListener {
             return "Text files (*.txt)";
         }
     };
-    private String msg;
     private boolean changed = false;
+    private File loadedFile;
+    private String msg;
+    private OCCCDate dob;
 
-    JMenuBar bar;
-    JMenu mnuFile, mnuHelp;
     JMenuItem mniNew, mniOpen, mniSave, mniSaveAs, mniExit, mniSaveEdit;
     JTextField txtFirstName, txtLastName, txtGovID, txtStudentID;
+    CalendarPanel pnlCalendar;
     JButton btnAddNew, btnEdit, btnDelete;
-    JLabel lblClassType;
     JList<Person> lstPeople;
     DefaultListModel<Person> personList;
+    JLabel lblClassType;
 
     public static void main(String[] args) {
         new PersonGUI();
@@ -60,49 +69,49 @@ public class PersonGUI extends JFrame implements ActionListener {
 
         // File menu
         {
-        bar = new JMenuBar();
-        mnuFile = new JMenu("File");
-        mnuFile.setMnemonic(KeyEvent.VK_F);
+            JMenu mnuFile = new JMenu("File");
+            mnuFile.setMnemonic(KeyEvent.VK_F);
 
-        mniNew = new JMenuItem("New...");
-        mniNew.setMnemonic(KeyEvent.VK_N);
-        mniOpen = new JMenuItem("Open");
-        mniOpen.setMnemonic(KeyEvent.VK_O);
-        mniSave = new JMenuItem("Save");
-        mniSave.setMnemonic(KeyEvent.VK_S);
-        mniSaveAs = new JMenuItem("Save as...");
-        mniSave.setMnemonic(KeyEvent.VK_A);
-        mniExit = new JMenuItem("Exit");
-        mniExit.setMnemonic(KeyEvent.VK_X);
+            mniNew = new JMenuItem("New...");
+            mniNew.setMnemonic(KeyEvent.VK_N);
+            mniOpen = new JMenuItem("Open");
+            mniOpen.setMnemonic(KeyEvent.VK_O);
+            mniSave = new JMenuItem("Save");
+            mniSave.setMnemonic(KeyEvent.VK_S);
+            mniSaveAs = new JMenuItem("Save as...");
+            mniSave.setMnemonic(KeyEvent.VK_A);
+            mniExit = new JMenuItem("Exit");
+            mniExit.setMnemonic(KeyEvent.VK_X);
 
-        JMenuItem[] mniFile = {mniNew, mniOpen, mniSave, mniSaveAs, mniExit};
-        for (JMenuItem mni : mniFile) {
-            if (mni == mniExit) {
-                mnuFile.addSeparator();
+            JMenuItem[] mniFile = {mniNew, mniOpen, mniSave, mniSaveAs, mniExit};
+            for (JMenuItem mni : mniFile) {
+                if (mni == mniExit) {
+                    mnuFile.addSeparator();
+                }
+                mni.addActionListener(this);
+                mnuFile.add(mni);
             }
-            mni.addActionListener(this);
-            mnuFile.add(mni);
+
+            // Help menu
+            JMenu mnuHelp = new JMenu("Help");
+            mnuHelp.setMnemonic(KeyEvent.VK_H);
+
+            // ADD HELP ITEMS HERE
+            mniSaveEdit = new JMenuItem("Saving and Editing");
+
+            JMenuItem[] mniHelp = {mniSaveEdit};
+            for (JMenuItem mni : mniHelp) {
+                mni.addActionListener(this);
+                mnuHelp.add(mni);
+            }
+
+            // Bar
+            JMenuBar bar = new JMenuBar();
+            bar.add(mnuFile);
+            bar.add(Box.createHorizontalGlue());
+            bar.add(mnuHelp);
+            setJMenuBar(bar);
         }
-
-        // Help menu
-        mnuHelp = new JMenu("Help");
-        mnuHelp.setMnemonic(KeyEvent.VK_H);
-
-        // ADD HELP ITEMS HERE
-        mniSaveEdit = new JMenuItem("Saving and Editing");
-
-        JMenuItem[] mniHelp = {mniSaveEdit};
-        for (JMenuItem mni : mniHelp) {
-            mni.addActionListener(this);
-            mnuHelp.add(mni);
-        }
-
-        // Bar
-        bar.add(mnuFile);
-        bar.add(Box.createHorizontalGlue());
-        bar.add(mnuHelp);
-        setJMenuBar(bar);
-}
         // Entry panel
         {
             JPanel pnlEntryGrid = new JPanel(new GridBagLayout());
@@ -118,8 +127,9 @@ public class PersonGUI extends JFrame implements ActionListener {
             JLabel lblLastName = new JLabel("Last Name:");
             JLabel lblGovID = new JLabel("Government ID:");
             JLabel lblStudentID = new JLabel("StudentID:");
+            JLabel lblDoB = new JLabel("Date of Birth: ");
 
-            JLabel[] lblList = {lblFirstName, lblLastName, lblGovID, lblStudentID};
+            JLabel[] lblList = {lblFirstName, lblLastName, lblGovID, lblStudentID, lblDoB};
             for (JLabel lbl : lblList) {
                 pnlEntryGrid.add(lbl, gbc);
                 gbc.gridy++;
@@ -157,6 +167,20 @@ public class PersonGUI extends JFrame implements ActionListener {
                 gbc.gridy++;
             }
 
+            pnlCalendar = new CalendarPanel();
+            pnlCalendar.addCalendarListener(new CalendarListener() {
+                @Override
+                public void selectedDateChanged(CalendarSelectionEvent cse) {
+                    dob = new OCCCDate(GregorianCalendar.from(cse.getNewDate().atStartOfDay(ZoneId.systemDefault())));
+                }
+
+                @Override
+                public void yearMonthChanged(YearMonthChangeEvent yearMonthChangeEvent) {
+
+                }
+            });
+            pnlEntryGrid.add(pnlCalendar, gbc);
+
             // Buttons
             JPanel pnlButtons = new JPanel();
             gbc.gridy++;
@@ -182,19 +206,19 @@ public class PersonGUI extends JFrame implements ActionListener {
             personList = new DefaultListModel<>();
             lstPeople = new JList<>(personList);
             lstPeople.addListSelectionListener(_ -> displaySelection());
-            lstPeople.setFixedCellWidth(200);
+            lstPeople.setFixedCellWidth(240);
             JScrollPane scpPersonList = new JScrollPane(lstPeople,
                     JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                     JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-            gbc.insets = new Insets(20, 0, 10, 10);
-            gbc.weighty = 0.8;
+            gbc.insets = new Insets(20, 20, 0, 20);
+            gbc.weighty = 1;
             gbc.fill = GridBagConstraints.VERTICAL;
             pnlData.add(scpPersonList, gbc);
 
-            gbc.insets = new Insets(10, 0, 20, 10);
+            gbc.insets = new Insets(0, 20, 10, 20);
             gbc.gridy++;
-            gbc.weighty = 0.2;
-            lblClassType = new JLabel();
+            gbc.weighty = 0.1;
+            lblClassType = new JLabel("Type:");
             pnlData.add(lblClassType, gbc);
 
             add(pnlData, BorderLayout.EAST);
@@ -284,8 +308,8 @@ public class PersonGUI extends JFrame implements ActionListener {
 
     private Person makePerson() {
         Person newPerson = null;
-        if (!txtFirstName.getText().isEmpty()) {
-            newPerson = new Person(txtFirstName.getText(), txtLastName.getText(), new OCCCDate());
+        if (!txtFirstName.getText().isEmpty() && !txtLastName.getText().isEmpty() && dob != null) {
+            newPerson = new Person(txtFirstName.getText(), txtLastName.getText(), dob);
             if (!txtGovID.getText().isEmpty()) {
                 newPerson = new RegisteredPerson(newPerson, txtGovID.getText());
                 if (!txtStudentID.getText().isEmpty()) {
@@ -305,6 +329,8 @@ public class PersonGUI extends JFrame implements ActionListener {
         if (selection != null) {
             txtFirstName.setText(selection.getFirstName());
             txtLastName.setText(selection.getLastName());
+            OCCCDate d = selection.getDoB();
+            pnlCalendar.setSelectedDate(LocalDate.of(d.getYear(), d.getMonthOfYear(), d.getDayOfMonth()));
             if (selection instanceof RegisteredPerson rp) {
                 txtGovID.setText(rp.getGovernmentID());
                 if (selection instanceof OCCCPerson op) {
@@ -320,6 +346,8 @@ public class PersonGUI extends JFrame implements ActionListener {
         txtLastName.setText(null);
         txtGovID.setText(null);
         txtStudentID.setText(null);
+        pnlCalendar.setSelectedDate(LocalDate.now());
+        lblClassType.setText("Type:");
     }
 
     private void newFile() {
@@ -356,6 +384,7 @@ public class PersonGUI extends JFrame implements ActionListener {
         if (fc.showOpenDialog(PersonGUI.this) == JFileChooser.APPROVE_OPTION) {
             loadedFile = fc.getSelectedFile();
             loadFile(loadedFile);
+            clearTxtFields();
             changed = false;
         }
     }
