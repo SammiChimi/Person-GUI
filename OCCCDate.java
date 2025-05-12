@@ -1,12 +1,13 @@
+import java.io.Serializable;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.Locale;
 
-public class OCCCDate {
-    private int dayOfMonth;
-    private int monthOfYear;
-    private int year;
-    private GregorianCalendar gc;
+public class OCCCDate implements Serializable {
+    private final int dayOfMonth;
+    private final int monthOfYear;
+    private final int year;
+    private final GregorianCalendar gc;
     private boolean dateFormat;
     private boolean dateStyle;
     private boolean dateDayName;

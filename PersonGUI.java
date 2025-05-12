@@ -12,7 +12,7 @@ import javax.swing.filechooser.FileFilter;
 public class PersonGUI extends JFrame implements ActionListener {
 
     private static final int WIDTH = 600;
-    private static final int HEIGHT = 300;
+    private static final int HEIGHT = 600;
     private File loadedFile;
     private final FileFilter filter = new FileFilter() {
         @Override
@@ -30,14 +30,16 @@ public class PersonGUI extends JFrame implements ActionListener {
         }
     };
     private String msg;
+    private boolean changed = false;
 
     JMenuBar bar;
     JMenu mnuFile, mnuHelp;
-    JMenuItem mniNew, mniOpen, mniSave, mniSaveAs, mniExit, mniHowTo;
+    JMenuItem mniNew, mniOpen, mniSave, mniSaveAs, mniExit, mniSaveEdit;
     JTextField txtFirstName, txtLastName, txtGovID, txtStudentID;
     JButton btnAddNew, btnEdit, btnDelete;
     JLabel lblClassType;
-    JComboBox<Person> cbxPeople;
+    JList<Person> lstPeople;
+    DefaultListModel<Person> personList;
 
     public static void main(String[] args) {
         new PersonGUI();
@@ -47,6 +49,7 @@ public class PersonGUI extends JFrame implements ActionListener {
         setResizable(false);
         setSize(WIDTH, HEIGHT);
         setTitle("Person Editor");
+        setLayout(new BorderLayout());
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             @Override
@@ -56,27 +59,24 @@ public class PersonGUI extends JFrame implements ActionListener {
         });
 
         // File menu
+        {
         bar = new JMenuBar();
         mnuFile = new JMenu("File");
         mnuFile.setMnemonic(KeyEvent.VK_F);
 
         mniNew = new JMenuItem("New...");
         mniNew.setMnemonic(KeyEvent.VK_N);
-
         mniOpen = new JMenuItem("Open");
         mniOpen.setMnemonic(KeyEvent.VK_O);
-
         mniSave = new JMenuItem("Save");
         mniSave.setMnemonic(KeyEvent.VK_S);
-
         mniSaveAs = new JMenuItem("Save as...");
         mniSave.setMnemonic(KeyEvent.VK_A);
-
         mniExit = new JMenuItem("Exit");
         mniExit.setMnemonic(KeyEvent.VK_X);
 
-        JMenuItem[] mniList = {mniNew, mniOpen, mniSave, mniSaveAs, mniExit};
-        for (JMenuItem mni : mniList) {
+        JMenuItem[] mniFile = {mniNew, mniOpen, mniSave, mniSaveAs, mniExit};
+        for (JMenuItem mni : mniFile) {
             if (mni == mniExit) {
                 mnuFile.addSeparator();
             }
@@ -88,112 +88,140 @@ public class PersonGUI extends JFrame implements ActionListener {
         mnuHelp = new JMenu("Help");
         mnuHelp.setMnemonic(KeyEvent.VK_H);
 
-        mniHowTo = new JMenuItem("Saving and Editing");
-        mniHowTo.addActionListener(this);
+        // ADD HELP ITEMS HERE
+        mniSaveEdit = new JMenuItem("Saving and Editing");
 
-        mnuHelp.add(mniHowTo);
+        JMenuItem[] mniHelp = {mniSaveEdit};
+        for (JMenuItem mni : mniHelp) {
+            mni.addActionListener(this);
+            mnuHelp.add(mni);
+        }
 
         // Bar
         bar.add(mnuFile);
         bar.add(Box.createHorizontalGlue());
         bar.add(mnuHelp);
         setJMenuBar(bar);
+}
+        // Entry panel
+        {
+            JPanel pnlEntryGrid = new JPanel(new GridBagLayout());
+            GridBagConstraints gbc = new GridBagConstraints();
 
-        // Main panel
-        setLayout(new BorderLayout());
-        JPanel pnlCenter = new JPanel(new GridLayout(1,2));
+            // Entry fields
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            gbc.insets = new Insets(0, 20, 10, 0);
+            gbc.gridx = 0;
+            gbc.gridy = 0;
 
-        JPanel pnlInfoGrid = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+            JLabel lblFirstName = new JLabel("First Name:");
+            JLabel lblLastName = new JLabel("Last Name:");
+            JLabel lblGovID = new JLabel("Government ID:");
+            JLabel lblStudentID = new JLabel("StudentID:");
 
-        // Entry fields
-        gbc.insets = new Insets(0,20,10,0);
-        gbc.gridx = 0;
-        gbc.weightx = .2;
+            JLabel[] lblList = {lblFirstName, lblLastName, lblGovID, lblStudentID};
+            for (JLabel lbl : lblList) {
+                pnlEntryGrid.add(lbl, gbc);
+                gbc.gridy++;
+            }
 
-        JLabel lblFirstName = new JLabel("First Name:");
-        JLabel lblLastName = new JLabel("Last Name:");
-        JLabel lblGovID = new JLabel("Government ID:");
-        JLabel lblStudentID = new JLabel("StudentID:");
+            gbc.gridx++;
+            gbc.gridy = 0;
 
-        int y = 0;
-        JLabel[] lblList = {lblFirstName, lblLastName, lblGovID, lblStudentID};
-        for (JLabel lbl : lblList) {
-            gbc.gridy = y++;
-            pnlInfoGrid.add(lbl, gbc);
+            txtFirstName = new JTextField();
+            txtLastName = new JTextField();
+            txtGovID = new JTextField();
+            txtStudentID = new JTextField();
+
+            JTextField[] txtList = {txtFirstName, txtLastName, txtGovID, txtStudentID};
+            for (JTextField txt : txtList) {
+                txt.addKeyListener(new KeyListener() {
+                    @Override
+                    public void keyTyped(KeyEvent e) {
+
+                    }
+
+                    @Override
+                    public void keyPressed(KeyEvent e) {
+                        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                            addNewPerson();
+                        }
+                    }
+
+                    @Override
+                    public void keyReleased(KeyEvent e) {
+
+                    }
+                });
+                pnlEntryGrid.add(txt, gbc);
+                gbc.gridy++;
+            }
+
+            // Buttons
+            JPanel pnlButtons = new JPanel();
+            gbc.gridy++;
+
+            btnAddNew = new JButton("Add New");
+            btnEdit = new JButton("Edit");
+            btnDelete = new JButton("Delete");
+
+            JButton[] btnList = {btnAddNew, btnEdit, btnDelete};
+            for (JButton btn : btnList) {
+                btn.addActionListener(this);
+                pnlButtons.add(btn);
+            }
+
+            pnlEntryGrid.add(pnlButtons, gbc);
+            add(pnlEntryGrid, BorderLayout.WEST);
         }
+        // Person data panel
+        {
+            JPanel pnlData = new JPanel(new GridBagLayout());
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.gridy = 0;
+            personList = new DefaultListModel<>();
+            lstPeople = new JList<>(personList);
+            lstPeople.addListSelectionListener(_ -> displaySelection());
+            lstPeople.setFixedCellWidth(200);
+            JScrollPane scpPersonList = new JScrollPane(lstPeople,
+                    JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                    JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            gbc.insets = new Insets(20, 0, 10, 10);
+            gbc.weighty = 0.8;
+            gbc.fill = GridBagConstraints.VERTICAL;
+            pnlData.add(scpPersonList, gbc);
 
-        gbc.insets = new Insets(0,0,10,20);
-        gbc.gridx = 1;
-        gbc.weightx = .3;
+            gbc.insets = new Insets(10, 0, 20, 10);
+            gbc.gridy++;
+            gbc.weighty = 0.2;
+            lblClassType = new JLabel();
+            pnlData.add(lblClassType, gbc);
 
-        y = 0;
-        JTextField[] txtList = {txtFirstName, txtLastName, txtGovID, txtStudentID};
-        for (JTextField txt : txtList) {
-            gbc.gridy = y++;
-            txt = new JTextField();
-            pnlInfoGrid.add(txt, gbc);
+            add(pnlData, BorderLayout.EAST);
+
+            setVisible(true);
         }
-
-        // ComboBox & type JLabel
-        cbxPeople = new JComboBox<>();
-        cbxPeople.addItemListener(_ -> displaySelection());
-        gbc.gridx = 3;
-        gbc.gridy = 1;
-        gbc.weightx = .6;
-        pnlInfoGrid.add(cbxPeople, gbc);
-
-        lblClassType = new JLabel();
-        gbc.gridy = 2;
-        pnlInfoGrid.add(lblClassType, gbc);
-
-        // Buttons
-        JPanel pnlButtons = new JPanel();
-
-        btnAddNew = new JButton("Add New");
-        btnEdit = new JButton("Edit");
-        btnDelete = new JButton("Delete");
-
-        JButton[] btnList = {btnAddNew, btnEdit, btnDelete};
-        for (JButton btn : btnList) {
-            btn.addActionListener(this);
-            pnlButtons.add(btn);
-        }
-
-        gbc.gridx = 1;
-        gbc.gridy = 4;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        pnlInfoGrid.add(pnlButtons, gbc);
-
-        // Main panel
-        pnlCenter.add(pnlInfoGrid);
-        add(pnlCenter, BorderLayout.CENTER);
-
-        setVisible(true);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        if (e.getSource() == mniNew) {
+            newFile();
+        }
         if (e.getSource() == mniSaveAs) {
-            saveNewFile();
+            saveAsFile();
         }
         if (e.getSource() == mniSave) {
-            if (loadedFile == null) {
-                saveNewFile();
-            } else {
-                saveToFile(loadedFile);
-            }
+            saveFile();
         }
         if (e.getSource() == mniOpen) {
-            loadFromFile();
+            openFile();
         }
         if (e.getSource() == mniExit) {
             exitProgram();
         }
-        if (e.getSource() == mniHowTo) {
-            JOptionPane.showMessageDialog(null,
+        if (e.getSource() == mniSaveEdit) {
+            JOptionPane.showMessageDialog(this,
                     """
                             New people are created via the "Add New..." option in the file menu \
                             after the Person information is entered into the various textboxes.
@@ -202,39 +230,51 @@ public class PersonGUI extends JFrame implements ActionListener {
                             person with new information entered.""",
                     "About PersonGUI", JOptionPane.PLAIN_MESSAGE);
         }
-
         if (e.getSource() == btnAddNew) {
-            msg = "Please enter person information to add a Person entry.";
-            Person newPerson = makePerson();
-
-            if (newPerson != null && !isCopy(newPerson)) {
-                cbxPeople.addItem(newPerson);
-                cbxPeople.setSelectedItem(newPerson);
-                displaySelection();
-                return;
-            }
-            JOptionPane.showMessageDialog(null, msg, "Message", JOptionPane.INFORMATION_MESSAGE);
+            addNewPerson();
         }
         if (e.getSource() == btnEdit) {
             msg = "Please enter person information to edit selection.";
             Person editedPerson = makePerson();
             if (editedPerson != null) {
-                cbxPeople.removeItem(cbxPeople.getSelectedItem());
-                cbxPeople.addItem(editedPerson);
-                cbxPeople.setSelectedItem(editedPerson);
+                personList.removeElement(lstPeople.getSelectedValue());
+                personList.addElement(editedPerson);
+                clearTxtFields();
+                changed = true;
             } else {
                 JOptionPane.showMessageDialog(null, msg, "Message", JOptionPane.INFORMATION_MESSAGE);
             }
-
         }
         if (e.getSource() == btnDelete) {
-            cbxPeople.removeItem(cbxPeople.getSelectedItem());
+            Person p = lstPeople.getSelectedValue();
+            if (p != null) {
+                int result = JOptionPane.showConfirmDialog(this, "Do you want to delete " +
+                                p.getClass().getName() + " \"" + p.getFirstName() + " " + p.getLastName() + "\"?",
+                        "Confirm Delete", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE, null);
+                if (result == JOptionPane.OK_OPTION) {
+                    personList.removeElement(lstPeople.getSelectedValue());
+                    changed = true;
+                }
+            }
+        }
+    }
+
+    private void addNewPerson() {
+        msg = "Please enter person information to add a Person entry.";
+        Person newPerson = makePerson();
+
+        if (newPerson != null && !isCopy(newPerson)) {
+            personList.addElement(newPerson);
+            clearTxtFields();
+            changed = true;
+        } else {
+            JOptionPane.showMessageDialog(null, msg, "Message", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
     private boolean isCopy(Person newPerson) {
-        for (int i = 0; i < cbxPeople.getItemCount(); i++) {
-            if (newPerson.equals(cbxPeople.getItemAt(i))) {
+        for (int i = 0; i < personList.getSize(); i++) {
+            if (newPerson.equals(personList.get(i))) {
                 msg = "This person already exists.";
                 return true;
             }
@@ -261,11 +301,7 @@ public class PersonGUI extends JFrame implements ActionListener {
     }
 
     private void displaySelection() {
-        txtFirstName.setText("");
-        txtLastName.setText("");
-        txtGovID.setText("");
-        txtStudentID.setText("");
-        Person selection = (Person) cbxPeople.getSelectedItem();
+        Person selection = lstPeople.getSelectedValue();
         if (selection != null) {
             txtFirstName.setText(selection.getFirstName());
             txtLastName.setText(selection.getLastName());
@@ -279,53 +315,94 @@ public class PersonGUI extends JFrame implements ActionListener {
         }
     }
 
-    private void loadFromFile() {
-        JFileChooser fc = new JFileChooser(System.getProperty("user.dir"));
-        fc.setFileFilter(filter);
+    private void clearTxtFields() {
+        txtFirstName.setText(null);
+        txtLastName.setText(null);
+        txtGovID.setText(null);
+        txtStudentID.setText(null);
+    }
 
-        if (fc.showOpenDialog(PersonGUI.this) == JFileChooser.APPROVE_OPTION) {
-            loadedFile = fc.getSelectedFile();
-            loadFromFile(loadedFile);
+    private void newFile() {
+        if (saveContinue()) {
+            loadedFile = null;
+            clearTxtFields();
+            personList.clear();
         }
     }
 
-    private void saveNewFile() {
+    private void saveFile() {
+        if (loadedFile == null) {
+            saveAsFile();
+        } else {
+            saveFile(loadedFile);
+        }
+    }
+
+    private void saveAsFile() {
         JFileChooser fc = new JFileChooser(System.getProperty("user.dir"));
         fc.setFileFilter(filter);
 
         if (fc.showSaveDialog(PersonGUI.this) == JFileChooser.APPROVE_OPTION) {
             loadedFile = fc.getSelectedFile();
-            saveToFile(loadedFile);
+            saveFile(loadedFile);
+            changed = false;
         }
     }
 
-    private void loadFromFile(File peopleFile) {
-        try {
-            FileInputStream fin = new FileInputStream(peopleFile);
-            ObjectInputStream oin = new ObjectInputStream(fin);
-            cbxPeople.removeAllItems();
-            while (true) {
-                cbxPeople.addItem((Person) oin.readObject());
-            }
-        } catch (Exception _) {
+    private void openFile() {
+        JFileChooser fc = new JFileChooser(System.getProperty("user.dir"));
+        fc.setFileFilter(filter);
+
+        if (fc.showOpenDialog(PersonGUI.this) == JFileChooser.APPROVE_OPTION) {
+            loadedFile = fc.getSelectedFile();
+            loadFile(loadedFile);
+            changed = false;
         }
     }
 
-    private void saveToFile(File saveFile) {
+    private void saveFile(File saveFile) {
         try {
-            FileOutputStream fout = new FileOutputStream(saveFile);
-            ObjectOutputStream oout = new ObjectOutputStream(fout);
+            ObjectOutputStream oout = new ObjectOutputStream(new FileOutputStream(saveFile));
 
-            for (int i = 0; i < cbxPeople.getItemCount(); i++) {
-                oout.writeObject(cbxPeople.getItemAt(i));
+            for (int i = 0; i < personList.size(); i++) {
+                oout.writeObject(personList.get(i));
             }
         } catch (IOException ioe) {
             System.out.println(ioe);
         }
     }
 
+    private void loadFile(File peopleFile) {
+        try {
+            FileInputStream fin = new FileInputStream(peopleFile);
+            ObjectInputStream oin = new ObjectInputStream(fin);
+            personList.removeAllElements();
+            while (true) {
+                personList.addElement((Person) oin.readObject());
+            }
+        } catch (Exception _) {
+        }
+    }
+
     private void exitProgram() {
-        dispose();
-        System.exit(0);
+        if (saveContinue()) {
+            dispose();
+            System.exit(0);
+        }
+    }
+
+    private boolean saveContinue() {
+        if (changed) {
+            int result = JOptionPane.showConfirmDialog(this, "Do you want to save changes?",
+                    "Save Changes?", JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE, null);
+            if (result == JOptionPane.CANCEL_OPTION) {
+                return false;
+            }
+            if (result == JOptionPane.YES_OPTION) {
+                saveFile();
+            }
+        }
+
+        return true;
     }
 }
