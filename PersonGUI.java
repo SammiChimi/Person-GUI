@@ -244,15 +244,36 @@ public class PersonGUI extends JFrame implements ActionListener {
         if (e.getSource() == mniExit) {
             exitProgram();
         }
-        if (e.getSource() == mniSaveEdit) {
-            JOptionPane.showMessageDialog(this,
-                    """
-                            New people are created via the "Add New..." option in the file menu \
-                            after the Person information is entered into the various textboxes.
-                            
-                            Edits via the "Edit" button will override the currently selected \
-                            person with new information entered.""",
-                    "About PersonGUI", JOptionPane.PLAIN_MESSAGE);
+     if (e.getSource() == mniSaveEdit) {
+    JOptionPane.showMessageDialog(this,
+            """
+            === Saving and Editing Help ===
+
+            • Adding a New Person:
+              - Enter the first name, last name, and select a date of birth.
+              - Government ID is required if you wish to add a student ID.
+              - After filling in the fields, click 'Add New' to create the person entry.
+              
+            • Editing an Existing Person:
+              - Select a person from the list on the right.
+              - The fields will populate with their current information.
+              - Update the information as needed, then click 'Edit'.
+              - This will overwrite the selected person's details.
+              
+            • Deleting a Person:
+              - Select a person and click 'Delete'.
+              - You will be asked to confirm the deletion.
+
+            • Saving Changes:
+              - Use 'File > Save' to overwrite the currently open file.
+              - Use 'File > Save As...' to save the list to a new file.
+              - When closing the program, you will be prompted to save if there are unsaved changes.
+
+            • Opening a File:
+              - Use 'File > Open' to load a previously saved list of people.
+              - Only .txt files saved by this application will work properly.
+            """,
+            "Help: Saving and Editing", JOptionPane.INFORMATION_MESSAGE);
         }
         if (e.getSource() == btnAddNew) {
             addNewPerson();
