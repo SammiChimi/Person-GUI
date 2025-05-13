@@ -115,12 +115,6 @@ public class PersonGUI extends JFrame implements ActionListener {
                 mnuHelp.add(mni);
             }
 
-            JMenuItem[] mniHelp = {mniSaveEdit};
-            for (JMenuItem mni : mniHelp) {
-                mni.addActionListener(this);
-                mnuHelp.add(mni);
-            }
-
             // Bar
             JMenuBar bar = new JMenuBar();
             bar.add(mnuFile);
