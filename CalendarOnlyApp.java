@@ -1,4 +1,6 @@
 import com.github.lgooddatepicker.components.CalendarPanel;
+import com.github.lgooddatepicker.components.DatePicker;
+import com.github.lgooddatepicker.components.DatePickerSettings;
 
 import javax.swing.*;
 import java.time.LocalDate;
@@ -11,10 +13,10 @@ public class CalendarOnlyApp {
         frame.setSize(300, 300);
 
         // Create the calendar panel
-        CalendarPanel calendarPanel = new CalendarPanel();
-
-        // Optionally select today's date
-        calendarPanel.setSelectedDate(LocalDate.now());
+        DatePickerSettings dps = new DatePickerSettings();
+        DatePicker picker = new DatePicker(dps);
+        dps.setDateRangeLimits(LocalDate.MIN, LocalDate.now());
+        dps.setVisibleTodayButton(false);
 
         // Add a listener to capture date changes
         // calendarPanel.addCalendarListener(event -> {
@@ -23,7 +25,7 @@ public class CalendarOnlyApp {
             // });
 
             // Add calendar panel to the frame
-            frame.add(calendarPanel);
+            frame.add(picker);
             frame.setVisible(true);
         }
     }

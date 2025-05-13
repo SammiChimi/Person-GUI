@@ -3,17 +3,16 @@
 // Advanced Java
 // OCCC Spring 2025
 
-import com.github.lgooddatepicker.components.CalendarPanel;
-import com.github.lgooddatepicker.optionalusertools.CalendarListener;
-import com.github.lgooddatepicker.zinternaltools.CalendarSelectionEvent;
-import com.github.lgooddatepicker.zinternaltools.YearMonthChangeEvent;
+import com.github.lgooddatepicker.components.DatePicker;
+import com.github.lgooddatepicker.components.DatePickerSettings;
+import com.github.lgooddatepicker.optionalusertools.DateChangeListener;
+import com.github.lgooddatepicker.zinternaltools.DateChangeEvent;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.GregorianCalendar;
 import javax.swing.filechooser.FileFilter;
@@ -44,7 +43,7 @@ public class PersonGUI extends JFrame implements ActionListener {
 
     JMenuItem mniNew, mniOpen, mniSave, mniSaveAs, mniExit, mniSaveEdit;
     JTextField txtFirstName, txtLastName, txtGovID, txtStudentID;
-    CalendarPanel pnlCalendar;
+    DatePicker dobPicker;
     JButton btnAddNew, btnEdit, btnDelete;
     JList<Person> lstPeople;
     DefaultListModel<Person> personList;
@@ -125,16 +124,17 @@ public class PersonGUI extends JFrame implements ActionListener {
 
             JLabel lblFirstName = new JLabel("First Name:");
             JLabel lblLastName = new JLabel("Last Name:");
+            JLabel lblDoB = new JLabel("Date of Birth: ");
             JLabel lblGovID = new JLabel("Government ID:");
             JLabel lblStudentID = new JLabel("StudentID:");
-            JLabel lblDoB = new JLabel("Date of Birth: ");
 
-            JLabel[] lblList = {lblFirstName, lblLastName, lblGovID, lblStudentID, lblDoB};
+            JLabel[] lblList = {lblFirstName, lblLastName, lblDoB, lblGovID, lblStudentID};
             for (JLabel lbl : lblList) {
                 pnlEntryGrid.add(lbl, gbc);
                 gbc.gridy++;
             }
 
+            // Text fields and date picker
             gbc.gridx++;
             gbc.gridy = 0;
 
@@ -142,6 +142,17 @@ public class PersonGUI extends JFrame implements ActionListener {
             txtLastName = new JTextField();
             txtGovID = new JTextField();
             txtStudentID = new JTextField();
+
+            DatePickerSettings dps = new DatePickerSettings();
+            dobPicker = new DatePicker(dps);
+            dps.setDateRangeLimits(LocalDate.MIN, LocalDate.now());
+            dobPicker.addDateChangeListener(dce -> {
+                if (dce.getNewDate() != null) {
+                    dob = new OCCCDate(GregorianCalendar.from(dce.getNewDate().atStartOfDay(ZoneId.systemDefault())));
+                } else {
+                    dob = null;
+                }
+            });
 
             JTextField[] txtList = {txtFirstName, txtLastName, txtGovID, txtStudentID};
             for (JTextField txt : txtList) {
@@ -165,21 +176,11 @@ public class PersonGUI extends JFrame implements ActionListener {
                 });
                 pnlEntryGrid.add(txt, gbc);
                 gbc.gridy++;
+                if (gbc.gridy == 2) {
+                    pnlEntryGrid.add(dobPicker, gbc);
+                    gbc.gridy++;
+                }
             }
-
-            pnlCalendar = new CalendarPanel();
-            pnlCalendar.addCalendarListener(new CalendarListener() {
-                @Override
-                public void selectedDateChanged(CalendarSelectionEvent cse) {
-                    dob = new OCCCDate(GregorianCalendar.from(cse.getNewDate().atStartOfDay(ZoneId.systemDefault())));
-                }
-
-                @Override
-                public void yearMonthChanged(YearMonthChangeEvent yearMonthChangeEvent) {
-
-                }
-            });
-            pnlEntryGrid.add(pnlCalendar, gbc);
 
             // Buttons
             JPanel pnlButtons = new JPanel();
@@ -230,16 +231,16 @@ public class PersonGUI extends JFrame implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == mniNew) {
-            newFile();
+            createNew();
         }
         if (e.getSource() == mniSaveAs) {
-            saveAsFile();
+            saveAs();
         }
         if (e.getSource() == mniSave) {
-            saveFile();
+            save();
         }
         if (e.getSource() == mniOpen) {
-            openFile();
+            open();
         }
         if (e.getSource() == mniExit) {
             exitProgram();
@@ -346,12 +347,13 @@ public class PersonGUI extends JFrame implements ActionListener {
     }
 
     private void displaySelection() {
+        clearTxtFields();
         Person selection = lstPeople.getSelectedValue();
         if (selection != null) {
             txtFirstName.setText(selection.getFirstName());
             txtLastName.setText(selection.getLastName());
             OCCCDate d = selection.getDoB();
-            pnlCalendar.setSelectedDate(LocalDate.of(d.getYear(), d.getMonthOfYear(), d.getDayOfMonth()));
+            dobPicker.setDate(LocalDate.of(d.getYear(), d.getMonthOfYear(), d.getDayOfMonth()));
             if (selection instanceof RegisteredPerson rp) {
                 txtGovID.setText(rp.getGovernmentID());
                 if (selection instanceof OCCCPerson op) {
@@ -367,27 +369,30 @@ public class PersonGUI extends JFrame implements ActionListener {
         txtLastName.setText(null);
         txtGovID.setText(null);
         txtStudentID.setText(null);
-        pnlCalendar.setSelectedDate(LocalDate.now());
+        dobPicker.setDate(null);
+        dob = null;
         lblClassType.setText("Type:");
     }
 
-    private void newFile() {
+    private void createNew() {
         if (saveContinue()) {
             loadedFile = null;
             clearTxtFields();
             personList.clear();
+            changed = false;
         }
     }
 
-    private void saveFile() {
+    private void save() {
         if (loadedFile == null) {
-            saveAsFile();
+            saveAs();
         } else {
             saveFile(loadedFile);
+            changed = false;
         }
     }
 
-    private void saveAsFile() {
+    private void saveAs() {
         JFileChooser fc = new JFileChooser(System.getProperty("user.dir"));
         fc.setFileFilter(filter);
 
@@ -398,7 +403,7 @@ public class PersonGUI extends JFrame implements ActionListener {
         }
     }
 
-    private void openFile() {
+    private void open() {
         JFileChooser fc = new JFileChooser(System.getProperty("user.dir"));
         fc.setFileFilter(filter);
 
@@ -418,7 +423,7 @@ public class PersonGUI extends JFrame implements ActionListener {
                 oout.writeObject(personList.get(i));
             }
         } catch (IOException ioe) {
-            System.out.println(ioe);
+            throw new RuntimeException();
         }
     }
 
@@ -434,13 +439,6 @@ public class PersonGUI extends JFrame implements ActionListener {
         }
     }
 
-    private void exitProgram() {
-        if (saveContinue()) {
-            dispose();
-            System.exit(0);
-        }
-    }
-
     private boolean saveContinue() {
         if (changed) {
             int result = JOptionPane.showConfirmDialog(this, "Do you want to save changes?",
@@ -449,10 +447,17 @@ public class PersonGUI extends JFrame implements ActionListener {
                 return false;
             }
             if (result == JOptionPane.YES_OPTION) {
-                saveFile();
+                save();
             }
         }
 
         return true;
+    }
+
+    private void exitProgram() {
+        if (saveContinue()) {
+            dispose();
+            System.exit(0);
+        }
     }
 }
