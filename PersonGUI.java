@@ -34,13 +34,14 @@ public class PersonGUI extends JFrame implements ActionListener {
             return "Text files (*.txt)";
         }
     };
-    private boolean changed = false;
+    private boolean changed = false, editing = false, adding = true;
     private File loadedFile;
     private String msg;
     private OCCCDate dob;
 
     JMenuItem mniNew, mniOpen, mniSave, mniSaveAs, mniExit, mniSaveEdit;
     JTextField txtFirstName, txtLastName, txtGovID, txtStudentID;
+    JTextField[] txtList;
     DatePicker dobPicker;
     JButton btnAddNew, btnEdit, btnDelete;
     JList<Person> lstPeople;
@@ -122,7 +123,7 @@ public class PersonGUI extends JFrame implements ActionListener {
 
             JLabel lblFirstName = new JLabel("First Name:");
             JLabel lblLastName = new JLabel("Last Name:");
-            JLabel lblDoB = new JLabel("Date of Birth: ");
+            JLabel lblDoB = new JLabel("Date of Birth:");
             JLabel lblGovID = new JLabel("Government ID:");
             JLabel lblStudentID = new JLabel("StudentID:");
 
@@ -151,8 +152,7 @@ public class PersonGUI extends JFrame implements ActionListener {
                     dob = null;
                 }
             });
-
-            JTextField[] txtList = {txtFirstName, txtLastName, txtGovID, txtStudentID};
+            txtList = new JTextField[] {txtFirstName, txtLastName, txtGovID, txtStudentID};
             for (JTextField txt : txtList) {
                 txt.addKeyListener(new KeyListener() {
                     @Override
@@ -190,6 +190,9 @@ public class PersonGUI extends JFrame implements ActionListener {
 
             JButton[] btnList = {btnAddNew, btnEdit, btnDelete};
             for (JButton btn : btnList) {
+                if (btn != btnAddNew) {
+                    btn.setEnabled(false);
+                }
                 btn.addActionListener(this);
                 pnlButtons.add(btn);
             }
@@ -243,7 +246,7 @@ public class PersonGUI extends JFrame implements ActionListener {
         if (e.getSource() == mniExit) {
             exitProgram();
         }
-     if (e.getSource() == mniSaveEdit) {
+        if (e.getSource() == mniSaveEdit) {
     JOptionPane.showMessageDialog(this,
             """
             === Saving and Editing Help ===
@@ -275,19 +278,29 @@ public class PersonGUI extends JFrame implements ActionListener {
             "Help: Saving and Editing", JOptionPane.INFORMATION_MESSAGE);
         }
         if (e.getSource() == btnAddNew) {
-            addNewPerson();
+            if (adding) {
+                if (addNewPerson()) {
+                    adding = false;
+                }
+            } else {
+                clearTxtFields();
+                adding = true;
+            }
+            setEditingMode(adding);
+            lstPeople.clearSelection();
+            btnEdit.setEnabled(!adding);
         }
         if (e.getSource() == btnEdit) {
-            msg = "Please enter person information to edit selection.";
-            Person editedPerson = makePerson();
-            if (editedPerson != null) {
-                personList.removeElement(lstPeople.getSelectedValue());
-                personList.addElement(editedPerson);
-                clearTxtFields();
-                changed = true;
+            if (editing) {
+                if (editPerson(lstPeople.getSelectedValue())) {
+                    editing = false;
+                }
             } else {
-                JOptionPane.showMessageDialog(null, msg, "Message", JOptionPane.INFORMATION_MESSAGE);
+                editing = true;
             }
+            setEditingMode(editing);
+            lstPeople.setEnabled(!editing);
+            btnAddNew.setEnabled(!editing);
         }
         if (e.getSource() == btnDelete) {
             Person p = lstPeople.getSelectedValue();
@@ -303,7 +316,33 @@ public class PersonGUI extends JFrame implements ActionListener {
         }
     }
 
-    private void addNewPerson() {
+    private boolean editPerson(Person p) {
+        msg = "Please enter person information to edit selection.";
+        Person editedPerson = makePerson();
+        if (editedPerson != null) {
+            personList.removeElement(p);
+            personList.addElement(editedPerson);
+            clearTxtFields();
+            changed = true;
+            return true;
+        } else {
+            JOptionPane.showMessageDialog(null, msg, "Message", JOptionPane.INFORMATION_MESSAGE);
+            return false;
+        }
+    }
+
+    private void setEditingMode(boolean bool) {
+        for (JTextField txt : txtList) {
+            txt.setEditable(bool);
+        }
+        dobPicker.setEnabled(bool);
+
+        btnDelete.setEnabled(!bool);
+        mniSave.setEnabled(!bool);
+        mniSaveAs.setEnabled(!bool);
+    }
+
+    private boolean addNewPerson() {
         msg = "Please enter person information to add a Person entry.";
         Person newPerson = makePerson();
 
@@ -311,8 +350,10 @@ public class PersonGUI extends JFrame implements ActionListener {
             personList.addElement(newPerson);
             clearTxtFields();
             changed = true;
+            return true;
         } else {
             JOptionPane.showMessageDialog(null, msg, "Message", JOptionPane.INFORMATION_MESSAGE);
+            return false;
         }
     }
 
@@ -345,9 +386,11 @@ public class PersonGUI extends JFrame implements ActionListener {
     }
 
     private void displaySelection() {
-        clearTxtFields();
         Person selection = lstPeople.getSelectedValue();
         if (selection != null) {
+            setEditingMode(false);
+            btnEdit.setEnabled(true);
+            clearTxtFields();
             txtFirstName.setText(selection.getFirstName());
             txtLastName.setText(selection.getLastName());
             OCCCDate d = selection.getDoB();
