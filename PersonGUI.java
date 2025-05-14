@@ -1,4 +1,4 @@
-// Erick Lujan
+// Erick Lujan, Bengiamin Le, Bennett Holliday
 // Person GUI
 // Advanced Java
 // OCCC Spring 2025
@@ -39,7 +39,7 @@ public class PersonGUI extends JFrame implements ActionListener {
     private String msg;
     private OCCCDate dob;
 
-    JMenuItem mniNew, mniOpen, mniSave, mniSaveAs, mniExit, mniSaveEdit;
+    JMenuItem mniNew, mniOpen, mniSave, mniSaveAs, mniExit;
     JMenuItem mniAddHelp, mniEditHelp, mniDeleteHelp, mniSaveHelp, mniOpenHelp;
     JTextField txtFirstName, txtLastName, txtGovID, txtStudentID;
     JTextField[] txtList;
@@ -95,27 +95,18 @@ public class PersonGUI extends JFrame implements ActionListener {
             JMenu mnuHelp = new JMenu("Help");
             mnuHelp.setMnemonic(KeyEvent.VK_H);
 
-            mniSaveEdit = new JMenuItem("Saving and Editing");
             mniAddHelp = new JMenuItem("How to Add");
             mniEditHelp = new JMenuItem("How to Edit");
             mniDeleteHelp = new JMenuItem("How to Delete");
             mniSaveHelp = new JMenuItem("Saving Files");
             mniOpenHelp = new JMenuItem("Opening Files");
 
-             JMenuItem[] mniHelp = {
-                mniAddHelp,
-                mniEditHelp,
-                mniDeleteHelp,
-                mniSaveHelp,
-                mniOpenHelp,
-                mniSaveEdit
-            };
+            JMenuItem[] mniHelp = {mniAddHelp, mniEditHelp, mniDeleteHelp, mniSaveHelp, mniOpenHelp};
 
-           for (JMenuItem mni : mniHelp) {
+            for (JMenuItem mni : mniHelp) {
                 mni.addActionListener(this);
                 mnuHelp.add(mni);
             }
-
 
             // Bar
             JMenuBar bar = new JMenuBar();
@@ -166,7 +157,7 @@ public class PersonGUI extends JFrame implements ActionListener {
                     dob = null;
                 }
             });
-            txtList = new JTextField[] {txtFirstName, txtLastName, txtGovID, txtStudentID};
+            txtList = new JTextField[]{txtFirstName, txtLastName, txtGovID, txtStudentID};
             for (JTextField txt : txtList) {
                 txt.addKeyListener(new KeyListener() {
                     @Override
@@ -261,63 +252,63 @@ public class PersonGUI extends JFrame implements ActionListener {
             exitProgram();
         }
         if (e.getSource() == mniAddHelp) {
-    JOptionPane.showMessageDialog(this,
-            """
-            === How to Add ===
+            JOptionPane.showMessageDialog(this,
+                    """
+                            === How to Add ===
+                            
+                            • Enter First Name, Last Name, and select a Date of Birth.
+                            • Government ID is required if you want to assign a Student ID.
+                            • Click 'Add New' to add the person to the list.
+                            """,
+                    "Help: Adding", JOptionPane.INFORMATION_MESSAGE);
+        }
 
-            • Enter First Name, Last Name, and select a Date of Birth.
-            • Government ID is required if you want to assign a Student ID.
-            • Click 'Add New' to add the person to the list.
-            """,
-            "Help: Adding", JOptionPane.INFORMATION_MESSAGE);
-}
+        if (e.getSource() == mniEditHelp) {
+            JOptionPane.showMessageDialog(this,
+                    """
+                            === How to Edit ===
+                            
+                            • Select a person from the list.
+                            • Update their information in the fields.
+                            • Click 'Edit' to save the changes.
+                            """,
+                    "Help: Editing", JOptionPane.INFORMATION_MESSAGE);
+        }
 
-if (e.getSource() == mniEditHelp) {
-    JOptionPane.showMessageDialog(this,
-            """
-            === How to Edit ===
+        if (e.getSource() == mniDeleteHelp) {
+            JOptionPane.showMessageDialog(this,
+                    """
+                            === How to Delete ===
+                            
+                            • Select a person from the list.
+                            • Click 'Delete'.
+                            • Confirm the action in the popup dialog.
+                            """,
+                    "Help: Deleting", JOptionPane.INFORMATION_MESSAGE);
+        }
 
-            • Select a person from the list.
-            • Update their information in the fields.
-            • Click 'Edit' to save the changes.
-            """,
-            "Help: Editing", JOptionPane.INFORMATION_MESSAGE);
-}
+        if (e.getSource() == mniSaveHelp) {
+            JOptionPane.showMessageDialog(this,
+                    """
+                            === Saving Files ===
+                            
+                            • Use 'File > Save' to save changes to the current file.
+                            • Use 'File > Save As...' to create a new save file.
+                            • You'll be prompted to save when exiting if changes are unsaved.
+                            """,
+                    "Help: Saving", JOptionPane.INFORMATION_MESSAGE);
+        }
 
-if (e.getSource() == mniDeleteHelp) {
-    JOptionPane.showMessageDialog(this,
-            """
-            === How to Delete ===
-
-            • Select a person from the list.
-            • Click 'Delete'.
-            • Confirm the action in the popup dialog.
-            """,
-            "Help: Deleting", JOptionPane.INFORMATION_MESSAGE);
-}
-
-if (e.getSource() == mniSaveHelp) {
-    JOptionPane.showMessageDialog(this,
-            """
-            === Saving Files ===
-
-            • Use 'File > Save' to save changes to the current file.
-            • Use 'File > Save As...' to create a new save file.
-            • You'll be prompted to save when exiting if changes are unsaved.
-            """,
-            "Help: Saving", JOptionPane.INFORMATION_MESSAGE);
-}
-
-if (e.getSource() == mniOpenHelp) {
-    JOptionPane.showMessageDialog(this,
-            """
-            === Opening Files ===
-
-            • Use 'File > Open' to load a previously saved .txt file.
-            • Only .txt files saved by this program will load correctly.
-            """,
-            "Help: Opening", JOptionPane.INFORMATION_MESSAGE);
-}
+        if (e.getSource() == mniOpenHelp) {
+            JOptionPane.showMessageDialog(this,
+                    """
+                            === Opening Files ===
+                            
+                            • Use 'File > Open' to load a previously saved .txt file.
+                            • Only .txt files saved by this program will load correctly.
+                            """,
+                    "Help: Opening", JOptionPane.INFORMATION_MESSAGE);
+        }
         if (e.getSource() == btnAddNew) {
             if (adding) {
                 if (addNewPerson()) {
