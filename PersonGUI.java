@@ -40,6 +40,7 @@ public class PersonGUI extends JFrame implements ActionListener {
     private OCCCDate dob;
 
     JMenuItem mniNew, mniOpen, mniSave, mniSaveAs, mniExit, mniSaveEdit;
+    JMenuItem mniAddHelp, mniEditHelp, mniDeleteHelp, mniSaveHelp, mniOpenHelp;
     JTextField txtFirstName, txtLastName, txtGovID, txtStudentID;
     JTextField[] txtList;
     DatePicker dobPicker;
