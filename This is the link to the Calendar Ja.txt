@@ -1,3 +1,2 @@
 This is the link to the Calendar Jar File 
-
-https://github.com/SammiChimi/Person-GUI/blob/main/LGoodDatePicker.jar
+https://github.com/LGoodDatePicker/LGoodDatePicker
